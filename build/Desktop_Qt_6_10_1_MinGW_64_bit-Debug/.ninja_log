@@ -1,0 +1,10 @@
+# ninja log v6
+1647	1753	7918635392222168	final_project.exe	47b7e4b9ddfcd73d
+6	79	7918635375765625	C:/Users/santi/OneDrive/Documentos/final_project/build/Desktop_Qt_6_10_1_MinGW_64_bit-Debug/CMakeFiles/cmake.verify_globs	9bcb4c5f5f40c3ec
+86	174	7918635376471115	final_project_autogen/timestamp	5ea3025849a98b50
+175	1647	7918635377495060	CMakeFiles/final_project.dir/main.cpp.obj	b04b0fbe06f5d994
+86	174	7918635376471115	final_project_autogen/mocs_compilation.cpp	5ea3025849a98b50
+86	174	7918635376471115	C:/Users/santi/OneDrive/Documentos/final_project/build/Desktop_Qt_6_10_1_MinGW_64_bit-Debug/final_project_autogen/timestamp	5ea3025849a98b50
+86	174	7918635376471115	C:/Users/santi/OneDrive/Documentos/final_project/build/Desktop_Qt_6_10_1_MinGW_64_bit-Debug/final_project_autogen/mocs_compilation.cpp	5ea3025849a98b50
+203	246	7918281680886322	CMakeFiles/final_project.dir/final_project_autogen/mocs_compilation.cpp.obj	810f55f09698e21e
+85	638	7918666366018449	build.ninja	50bdc81273d5c072
