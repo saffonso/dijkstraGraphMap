@@ -27,9 +27,9 @@ public:
 
     bool search(const std::string& word);
 
-    std::vector<std::string> autocomplete(const std::string& prefix, int maxResults = 5) const;
+    std::vector<std::pair<std::string, long>> autocomplete(const std::string& prefix, int maxResults = 5) const;
 
-    void collectWords(TrieNode* node, std::string& prefix, std::vector<std::pair<std::string, long>>& results, int maxResults);
+    void collectWords(TrieNode* node,const std::string& prefix, std::vector<std::pair<std::string, long>>& results, int maxResults) const;
 };
 
 #endif // TRIE_H
