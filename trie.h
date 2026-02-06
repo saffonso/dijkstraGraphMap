@@ -10,6 +10,7 @@ class TrieNode{
 public:
     std::unordered_map<char, std::unique_ptr<TrieNode>> children;
     bool isEndOfWord;
+    long nodeId;
 
     TrieNode(): isEndOfWord(false){}
 };
@@ -22,11 +23,13 @@ private:
 public:
     Trie();
 
-    void insert(const std::string& word);
+    void insert(const std::string& word, long nodeId);
 
     bool search(const std::string& word);
 
     std::vector<std::string> autocomplete(const std::string& prefix, int maxResults = 5) const;
+
+    void collectWords(TrieNode* node, std::string& prefix, std::vector<std::pair<std::string, long>>& results, int maxResults);
 };
 
 #endif // TRIE_H
