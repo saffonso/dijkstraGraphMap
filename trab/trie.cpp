@@ -2,7 +2,7 @@
 
 Trie::Trie() : root(std::make_unique<TrieNode>()) {}
 
-void Trie::insert(const std::string& word) {
+void Trie::insert(const std::string& word, const std::vector<long long>& nodeIds) {
     TrieNode* current = root.get();
     
     for (char c : word) {
@@ -13,6 +13,7 @@ void Trie::insert(const std::string& word) {
     }
     
     current->isEndOfWord = true;
+    current->nodeIds = nodeIds;
 }
 
 bool Trie::search(const std::string& word) const {
@@ -30,13 +31,14 @@ bool Trie::search(const std::string& word) const {
 }
 
 void Trie::collectWords(TrieNode* node, const std::string& prefix, 
-                        std::vector<std::string>& results, int maxResults) const {
+                        std::vector<std::pair<std::string, std::vector<long long>>>& results, 
+                        int maxResults) const {
     if (results.size() >= static_cast<size_t>(maxResults)) {
         return;
     }
     
     if (node->isEndOfWord) {
-        results.push_back(prefix);
+        results.emplace_back(prefix, node->nodeIds);
     }
     
     for (const auto& pair : node->children) {
@@ -47,8 +49,9 @@ void Trie::collectWords(TrieNode* node, const std::string& prefix,
     }
 }
 
-std::vector<std::string> Trie::autocomplete(const std::string& prefix, int maxResults) const {
-    std::vector<std::string> results;
+std::vector<std::pair<std::string, std::vector<long long>>> Trie::autocomplete(
+    const std::string& prefix, int maxResults) const {
+    std::vector<std::pair<std::string, std::vector<long long>>> results;
     TrieNode* current = root.get();
     
     // Navega até o nó do prefixo

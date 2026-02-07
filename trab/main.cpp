@@ -5,6 +5,7 @@
 #include "graph.h"
 #include "dijkstra.h"
 #include "dataloader.h"
+#include "autocomplete.h"
 
 // Limpa buffer do cin após ler números
 void clearInputBuffer() {
@@ -24,99 +25,60 @@ void showMenu() {
     std::cout << "Escolha uma opcao: ";
 }
 
-// Função para busca com autocomplete
+// Função para busca com autocomplete interativo
 void searchLocation(const Trie& trie) {
-    std::cout << "\nDigite o inicio do nome do local: ";
-    std::string prefix;
-    std::getline(std::cin, prefix);
+    InteractiveAutocomplete ac(trie);
+    std::cout << "\n=== Buscar Local ===" << std::endl;
+    std::cout << "Digite para buscar (use setas ↑↓ para navegar, Enter para selecionar):\n";
     
-    if (prefix.empty()) {
-        std::cout << "Prefixo vazio. Tente novamente." << std::endl;
-        return;
-    }
+    auto result = ac.getInput("Local: ");
     
-    auto suggestions = trie.autocomplete(prefix, 10);
-    
-    if (suggestions.empty()) {
-        std::cout << "Nenhuma sugestao encontrada para \"" << prefix << "\"" << std::endl;
-    } else {
-        std::cout << "\nSugestoes encontradas:" << std::endl;
-        for (size_t i = 0; i < suggestions.size(); i++) {
-            std::cout << "  " << (i + 1) << ". " << suggestions[i] << std::endl;
+    if (!result.first.empty()) {
+        std::cout << "\nLocal selecionado: " << result.first << std::endl;
+        std::cout << "IDs associados: ";
+        for (size_t i = 0; i < result.second.size(); i++) {
+            std::cout << result.second[i];
+            if (i < result.second.size() - 1) std::cout << ", ";
         }
+        std::cout << std::endl;
+    } else {
+        std::cout << "\nNenhum local selecionado." << std::endl;
     }
 }
 
-// Seleciona um local com autocomplete
-std::string selectLocation(const Trie& trie, const std::string& prompt) {
-    std::cout << prompt;
-    std::string prefix;
-    std::getline(std::cin, prefix);
-    
-    if (prefix.empty()) {
-        return "";
-    }
-    
-    auto suggestions = trie.autocomplete(prefix, 10);
-    
-    if (suggestions.empty()) {
-        std::cout << "Nenhuma sugestao encontrada." << std::endl;
-        return "";
-    }
-    
-    std::cout << "\nSelecione uma opcao:" << std::endl;
-    for (size_t i = 0; i < suggestions.size(); i++) {
-        std::cout << "  " << (i + 1) << ". " << suggestions[i] << std::endl;
-    }
-    std::cout << "Opcao (1-" << suggestions.size() << "): ";
-    
-    int choice;
-    std::cin >> choice;
-    clearInputBuffer();
-    
-    if (choice < 1 || choice > static_cast<int>(suggestions.size())) {
-        std::cout << "Opcao invalida." << std::endl;
-        return "";
-    }
-    
-    return suggestions[choice - 1];
+// Seleciona um local com autocomplete interativo e retorna nome e IDs
+std::pair<std::string, std::vector<long long>> selectLocation(const Trie& trie, const std::string& prompt) {
+    InteractiveAutocomplete ac(trie);
+    std::cout << prompt << std::endl;
+    std::cout << "(Use setas ↑↓ para navegar, Enter para selecionar)\n";
+    return ac.getInput("");
 }
 
 // Função para calcular e exibir rota
 void calculateRoute(const Graph& graph, const Trie& trie, 
-                   const std::unordered_map<std::string, std::vector<long long>>& labelToNodes,
                    const std::unordered_map<long long, std::string>& nodesToLabel) {
     
     std::cout << "\n=== Calcular Rota ===" << std::endl;
     
     // Seleciona origem
-    std::string originLabel = selectLocation(trie, "\nDigite o inicio do nome da ORIGEM: ");
-    if (originLabel.empty()) {
+    auto origin = selectLocation(trie, "\nDigite o inicio do nome da ORIGEM: ");
+    if (origin.first.empty() || origin.second.empty()) {
         std::cout << "Origem nao selecionada." << std::endl;
         return;
     }
-    std::cout << "Origem: " << originLabel << std::endl;
+    std::cout << "Origem: " << origin.first << std::endl;
     
     // Seleciona destino
-    std::string destLabel = selectLocation(trie, "\nDigite o inicio do nome do DESTINO: ");
-    if (destLabel.empty()) {
+    auto dest = selectLocation(trie, "\nDigite o inicio do nome do DESTINO: ");
+    if (dest.first.empty() || dest.second.empty()) {
         std::cout << "Destino nao selecionado." << std::endl;
         return;
     }
-    std::cout << "Destino: " << destLabel << std::endl;
-    
-    // Obtém IDs dos nós
-    auto originIt = labelToNodes.find(originLabel);
-    auto destIt = labelToNodes.find(destLabel);
-    
-    if (originIt == labelToNodes.end() || destIt == labelToNodes.end()) {
-        std::cout << "Erro: local nao encontrado no mapa." << std::endl;
-        return;
-    }
+    std::cout << "Destino: " << dest.first << std::endl;
     
     // Usa o primeiro nó de cada label (pode haver múltiplos)
-    long long originId = originIt->second[0];
-    long long destId = destIt->second[0];
+    long long originId = origin.second[0];
+    long long destId = dest.second[0];
     
     std::cout << "\nCalculando rota..." << std::endl;
     
@@ -176,7 +138,6 @@ int main() {
     // Estruturas de dados
     Graph graph;
     Trie trie;
-    std::unordered_map<std::string, std::vector<long long>> labelToNodes;
     std::unordered_map<long long, std::string> nodesToLabel;
     
     // Carrega dados
@@ -192,7 +153,7 @@ int main() {
         return 1;
     }
     
-    if (!loader.loadLabelToNodes(labelToNodes)) {
+    if (!loader.loadAndPopulateTrie(trie)) {
         std::cerr << "Erro fatal: nao foi possivel carregar label_to_nodes.json" << std::endl;
         return 1;
     }
@@ -201,8 +162,6 @@ int main() {
         std::cerr << "Erro fatal: nao foi possivel carregar nodes_to_label.json" << std::endl;
         return 1;
     }
-    
-    loader.populateTrie(trie, labelToNodes);
     
     std::cout << "\nDados carregados com sucesso!" << std::endl;
     std::cout << "Grafo: " << graph.getNodeCount() << " nos, " << graph.getEdgeCount() << " arestas" << std::endl;
@@ -219,7 +178,7 @@ int main() {
                 searchLocation(trie);
                 break;
             case 2:
-                calculateRoute(graph, trie, labelToNodes, nodesToLabel);
+                calculateRoute(graph, trie, nodesToLabel);
                 break;
             case 3:
                 std::cout << "\nAte logo!" << std::endl;

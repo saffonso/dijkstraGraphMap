@@ -10,6 +10,7 @@ class TrieNode {
 public:
     std::unordered_map<char, std::unique_ptr<TrieNode>> children;
     bool isEndOfWord;
+    std::vector<long long> nodeIds;  // IDs dos nós do grafo
     
     TrieNode() : isEndOfWord(false) {}
 };
@@ -20,19 +21,21 @@ private:
     
     // Função auxiliar para coletar palavras a partir de um nó
     void collectWords(TrieNode* node, const std::string& prefix, 
-                      std::vector<std::string>& results, int maxResults) const;
+                      std::vector<std::pair<std::string, std::vector<long long>>>& results, 
+                      int maxResults) const;
 
 public:
     Trie();
     
-    // Insere uma palavra na Trie
-    void insert(const std::string& word);
+    // Insere uma palavra na Trie com seus IDs
+    void insert(const std::string& word, const std::vector<long long>& nodeIds);
     
     // Verifica se uma palavra existe na Trie
     bool search(const std::string& word) const;
     
-    // Retorna sugestões de autocomplete (até maxResults)
-    std::vector<std::string> autocomplete(const std::string& prefix, int maxResults = 5) const;
+    // Retorna sugestões de autocomplete com IDs (até maxResults)
+    std::vector<std::pair<std::string, std::vector<long long>>> autocomplete(
+        const std::string& prefix, int maxResults = 5) const;
 };
 
 #endif // TRIE_H
