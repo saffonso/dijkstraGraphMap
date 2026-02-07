@@ -1,21 +1,20 @@
 #include <QCoreApplication>
-#include <QLocale>
-#include <QTranslator>
+#include <iostream>
+#include <vector>
+#include "trie.h"
+#include "dataloader.h"
 
-int main(int argc, char *argv[])
-{
-    QCoreApplication a(argc, argv);
+int main(int argc, char *argv[]) {
+    QCoreApplication app(argc, argv);
+    
+    std::cout << "Começando" << std::endl << std::endl;
+    
+    Trie trie;
+    Dataloader loader("C:\\Users\\santi\\Downloads");
 
-    QTranslator translator;
-    const QStringList uiLanguages = QLocale::system().uiLanguages();
-    for (const QString &locale : uiLanguages) {
-        const QString baseName = "final_project_" + QLocale(locale).name();
-        if (translator.load(":/i18n/" + baseName)) {
-            a.installTranslator(&translator);
-            break;
-        }
-    }
+    QJsonObject labelsJson = loader.loadLabelToNodes();
 
+    loader.makeTrie(trie, labelsJson);
 
-    return a.exec();
+    return 0;
 }

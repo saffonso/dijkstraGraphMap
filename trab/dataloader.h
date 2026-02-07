@@ -3,9 +3,12 @@
 
 #include "graph.h"
 #include "trie.h"
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QString>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 class DataLoader {
 private:
@@ -20,14 +23,17 @@ public:
     // Carrega edges.json e adiciona arestas ao grafo
     bool loadEdges(Graph& graph);
     
-    // Carrega label_to_nodes.json (nome -> lista de IDs)
-    bool loadLabelToNodes(std::unordered_map<std::string, std::vector<long long>>& labelToNodes);
+    // Lê label_to_nodes.json e retorna o JSON
+    QJsonObject loadLabelToNodes();
     
-    // Carrega nodes_to_label.json (ID -> nome)
+    // Popula a Trie com dados do JSON
+    void makeTrie(Trie& trie, const QJsonObject& labelsJson);
+    
+    // Carrega label_to_nodes.json e popula a Trie diretamente (usa os dois acima)
+    bool loadAndPopulateTrie(Trie& trie);
+    
+    // Carrega nodes_to_label.json (ID -> nome) para exibir rota
     bool loadNodesToLabel(std::unordered_map<long long, std::string>& nodesToLabel);
-    
-    // Popula a Trie com todos os nomes de interseções
-    bool populateTrie(Trie& trie, const std::unordered_map<std::string, std::vector<long long>>& labelToNodes);
 };
 
 #endif // DATALOADER_H
