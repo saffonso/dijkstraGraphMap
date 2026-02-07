@@ -1,20 +1,26 @@
-#include <QCoreApplication>
+#include <QApplication>
 #include <iostream>
-#include <vector>
+#include "mainwindow.h"
 #include "trie.h"
 #include "dataloader.h"
 
 int main(int argc, char *argv[]) {
-    QCoreApplication app(argc, argv);
-    
-    std::cout << "Começando" << std::endl << std::endl;
-    
+    QApplication app(argc, argv);
+
     Trie trie;
+
     Dataloader loader("C:\\Users\\santi\\Downloads");
 
-    QJsonObject labelsJson = loader.loadLabelToNodes();
+    QJsonObject obj = loader.loadLabelToNodes();
+    loader.makeTrie(trie, obj);
 
-    loader.makeTrie(trie, labelsJson);
+    std::cout << "\nDados carregados com sucesso!" << std::endl;
+    std::cout << "Abrindo interface gráfica..." << std::endl;
+
+    MainWindow window(trie);
+    window.show();
+
+    return app.exec();
 
     return 0;
 }

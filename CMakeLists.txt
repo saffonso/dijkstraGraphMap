@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core LinguistTools)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core LinguistTools)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(TS_FILES final_project_pt_BR.ts)
 
@@ -20,8 +21,12 @@ add_executable(final_project
   dataloader.h dataloader.cpp
   trie.h trie.cpp
   grafo.h grafo.cpp
+  autocompletewidget.h autocompletewidget.cpp
+  mainwindow.h mainwindow.cpp
+
 )
 target_link_libraries(final_project PRIVATE Qt${QT_VERSION_MAJOR}::Core)
+target_link_libraries(final_project PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
 if(COMMAND qt_create_translation)
     qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
