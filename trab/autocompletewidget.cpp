@@ -13,6 +13,11 @@ AutocompleteWidget::AutocompleteWidget(const Trie& trie, QWidget *parent)
     m_lineEdit = new QLineEdit(this);
     m_lineEdit->setPlaceholderText("Digite para buscar locais (Ex: Praça, Rua...)");
     
+    // Create debounce timer to prevent excessive autocomplete calls
+    m_debounceTimer = new QTimer(this);
+    m_debounceTimer->setSingleShot(true);
+    m_debounceTimer->setInterval(150);  // 150ms delay
+    
     // Create list widget (NOT a popup, just a normal widget)
     m_popup = new QListWidget(this);
     m_popup->setFocusPolicy(Qt::NoFocus);  // Never takes focus
@@ -42,25 +47,44 @@ AutocompleteWidget::AutocompleteWidget(const Trie& trie, QWidget *parent)
     layout->addWidget(m_popup);
     setLayout(layout);
     
-    // Connect signals
+    // Connect signals with debouncing
     connect(m_lineEdit, &QLineEdit::textChanged, this, &AutocompleteWidget::onTextChanged);
+    connect(m_debounceTimer, &QTimer::timeout, this, &AutocompleteWidget::performAutocomplete);
     connect(m_popup, &QListWidget::itemClicked, this, &AutocompleteWidget::onItemClicked);
 }
 
 void AutocompleteWidget::onTextChanged(const QString& text)
 {
+    // Stop any pending autocomplete
+    m_debounceTimer->stop();
+    
     if (text.isEmpty()) {
         hidePopup();
+        m_currentResults.clear();
         return;
     }
     
-    updateSuggestions(text);
+    // Store the current text and start debounce timer
+    m_currentText = text;
+    m_debounceTimer->start();
+}
+
+void AutocompleteWidget::performAutocomplete()
+{
+    if (m_currentText.isEmpty()) {
+        return;
+    }
+    
+    updateSuggestions(m_currentText);
 }
 
 void AutocompleteWidget::updateSuggestions(const QString& text)
 {
-    // Call Trie autocomplete function
-    m_currentResults = m_trie.autocomplete(text.toStdString(), 10);
+    // Call Trie autocomplete function and use move to avoid copy
+    auto results = m_trie.autocomplete(text.toStdString(), 10);
+    
+    // Move results to avoid copying large vectors
+    m_currentResults = std::move(results);
     
     m_popup->clear();
     
@@ -117,8 +141,16 @@ void AutocompleteWidget::onItemClicked(QListWidgetItem* item)
     if (index >= 0 && index < static_cast<int>(m_currentResults.size())) {
         const auto& [name, nodeIds] = m_currentResults[index];
         
-        // Update line edit with selected text
+        // Stop debounce timer to prevent autocomplete
+        m_debounceTimer->stop();
+        
+        // Hide popup BEFORE updating text
+        hidePopup();
+        
+        // Block signals to prevent textChanged from triggering
+        m_lineEdit->blockSignals(true);
         m_lineEdit->setText(QString::fromStdString(name));
+        m_lineEdit->blockSignals(false);
         
         // Convert std::vector to QVector
         QVector<long long> qNodeIds;
@@ -128,8 +160,6 @@ void AutocompleteWidget::onItemClicked(QListWidgetItem* item)
         
         // Emit signal with selection
         emit locationSelected(QString::fromStdString(name), qNodeIds);
-        
-        hidePopup();
     }
 }
 

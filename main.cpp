@@ -14,13 +14,14 @@ int main(int argc, char *argv[]) {
     QJsonObject obj = loader.loadLabelToNodes();
     loader.makeTrie(trie, obj);
 
-    std::cout << "\nDados carregados com sucesso!" << std::endl;
-    std::cout << "Abrindo interface gráfica..." << std::endl;
+    std::cout << "Dados carregados com sucesso!" << std::endl;
 
     MainWindow window(trie);
     window.show();
 
-    return app.exec();
+    app.exec();
+
+    std::cout << window.getSelectedLocationName().toStdString() << std::endl;
 
     return 0;
 }

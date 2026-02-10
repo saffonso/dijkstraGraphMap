@@ -61,4 +61,7 @@ void MainWindow::onLocationSelected(const QString& name, const QVector<long long
     }
     
     m_selectedInfoDisplay->setPlainText(output);
+    
+    // Auto-close window after selection
+    close();
 }

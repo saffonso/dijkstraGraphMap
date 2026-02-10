@@ -16,6 +16,7 @@ signals:
 private slots:
     void onTextChanged(const QString& text);
     void onItemClicked(QListWidgetItem* item);
+    void performAutocomplete();
 private:
     void showPopup();
     void hidePopup();
@@ -25,6 +26,8 @@ private:
 
     QLineEdit* lineEdit;
     QListWidget* popup;
+    QTimer* debounceTimer;
+    QString currentText;
 
     std::vector<std::pair<std::string, std::vector<long long>>> currentResults;
 };

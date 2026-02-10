@@ -42,15 +42,21 @@ MainWindow::MainWindow(const Trie& trie, QWidget *parent)  : QWidget(parent), tr
 
 void MainWindow::onLocationSelected(const QString& name, const QVector<long long>& nodeIds)
 {
+    selectedLocationName = name;
+
+    selectedNodeIds.clear();
+    selectedNodeIds.reserve(nodeIds.size());
+    for (auto id : nodeIds) {
+        selectedNodeIds.append(id);
+    }
+
     QString output;
     output += QString("Local: %1\n\n").arg(name);
 
-    for (int i = 0; i < nodeIds.size(); i++) {
-        output += QString("   • %1").arg(nodeIds[i]);
-        if (i < nodeIds.size() - 1) {
-            output += "\n";
-        }
-    }
-
     selectedInfoDisplay->setPlainText(output);
+    close();
+}
+
+QString MainWindow::getSelectedLocationName() const{
+    return selectedLocationName;
 }

@@ -10,6 +10,7 @@ class MainWindow : public QWidget
     Q_OBJECT
 public:
     explicit MainWindow(const Trie& trie, QWidget *parent = nullptr);
+    QString getSelectedLocationName() const;
 
 private slots:
     void onLocationSelected(const QString& name, const QVector<long long>& nodeIds);
@@ -19,6 +20,9 @@ private:
 
     AutocompleteWidget *autocompleteWidget;
     QTextEdit *selectedInfoDisplay;
+
+    QString selectedLocationName;
+    QVector<qint64> selectedNodeIds;
 };
 
 #endif // MAINWINDOW_H

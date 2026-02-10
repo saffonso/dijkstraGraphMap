@@ -6,6 +6,7 @@
 #include <QListWidget>
 #include <QVBoxLayout>
 #include <QVector>
+#include <QTimer>
 #include "trie.h"
 
 class AutocompleteWidget : public QWidget
@@ -21,6 +22,7 @@ signals:
 private slots:
     void onTextChanged(const QString& text);
     void onItemClicked(QListWidgetItem* item);
+    void performAutocomplete();
 
 private:
     void showPopup();
@@ -31,6 +33,8 @@ private:
     
     QLineEdit* m_lineEdit;
     QListWidget* m_popup;
+    QTimer* m_debounceTimer;
+    QString m_currentText;
     
     // Store results for selection
     std::vector<std::pair<std::string, std::vector<long long>>> m_currentResults;

@@ -3,6 +3,7 @@
 #include <QKeyEvent>
 #include <QVBoxLayout>
 #include <QLineEdit>
+#include <QTimer>
 
 AutocompleteWidget::AutocompleteWidget(const Trie &trie, QWidget *parent)
     : QWidget(parent), trie(trie)
@@ -12,7 +13,13 @@ AutocompleteWidget::AutocompleteWidget(const Trie &trie, QWidget *parent)
     layout->setSpacing(0);
 
     lineEdit = new QLineEdit(this);
-    lineEdit->setPlaceholderText("Digite para buscar locais (Ex: Praça, Rua...)");
+    lineEdit->setPlaceholderText("Digite para buscar locais...");
+
+    int ONE_HUNDRED_AND_FIFT_MS = 150;
+
+    debounceTimer = new QTimer(this);
+    debounceTimer->setSingleShot(true);
+    debounceTimer->setInterval(ONE_HUNDRED_AND_FIFT_MS);
 
     popup = new QListWidget(this);
     popup->setFocusPolicy(Qt::NoFocus);
@@ -42,24 +49,36 @@ AutocompleteWidget::AutocompleteWidget(const Trie &trie, QWidget *parent)
 
     connect(lineEdit, &QLineEdit::textChanged, this, &AutocompleteWidget::onTextChanged);
     connect(popup, &QListWidget::itemClicked, this, &AutocompleteWidget::onItemClicked);
+    connect(debounceTimer, &QTimer::timeout, this, &AutocompleteWidget::performAutocomplete);
 }
 void AutocompleteWidget::onTextChanged(const QString& text)
 {
+    debounceTimer->stop();
+
     if (text.isEmpty()) {
         hidePopup();
+        currentResults.clear();
         return;
     }
 
-    updateSuggestions(text);
+    currentText = text;
+    debounceTimer->start();
+}
+
+void AutocompleteWidget::performAutocomplete(){
+    if(currentText.isEmpty()){
+        return;
+    }
+
+    updateSuggestions(currentText);
 }
 
 void AutocompleteWidget::updateSuggestions(const QString& text)
 {
-    qDebug() << "Buscando prefixo:" << text << "tamanho:" << text.length();
+    auto results = trie.autocomplete(text.toStdString(), 5);
 
-    currentResults = trie.autocomplete(text.toStdString(), 10);
+    currentResults = std::move(results);
 
-    qDebug() << "Resultados encontrados:" << currentResults.size();
     popup->clear();
 
     if (currentResults.empty()) {
@@ -69,13 +88,6 @@ void AutocompleteWidget::updateSuggestions(const QString& text)
 
     for (const auto& [name, nodeIds] : currentResults) {
         QString displayText = QString::fromStdString(name);
-
-        if (!nodeIds.empty()) {
-            displayText += QString(" (%1 nó%2)")
-                               .arg(nodeIds.size())
-                               .arg(nodeIds.size() > 1 ? "s" : "");
-        }
-
         popup->addItem(displayText);
     }
 
@@ -89,9 +101,7 @@ void AutocompleteWidget::showPopup()
         return;
     }
 
-    int itemHeight = 35;
-    int visibleItems = qMin(popup->count(), 6);
-    int popupHeight = visibleItems * itemHeight;
+    int popupHeight = 236;
 
     popup->setMinimumHeight(popupHeight);
     popup->setMaximumHeight(popupHeight);
@@ -112,6 +122,10 @@ void AutocompleteWidget::onItemClicked(QListWidgetItem* item)
     if (index >= 0 && index < static_cast<int>(currentResults.size())) {
         const auto& [name, nodeIds] = currentResults[index];
 
+        debounceTimer->stop();
+        hidePopup();
+
+        lineEdit->blockSignals(true);
         lineEdit->setText(QString::fromStdString(name));
 
         QVector<long long> qNodeIds;
